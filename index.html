@@ -14,8 +14,6 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Shrikhand&display=swap">
 <style>
-/* Versteckte Elemente wirklich ausblenden (wichtig außerhalb von Claude, z. B. auf GitHub) */
-[hidden]{display:none!important}
 /* Layout: ein Spieltisch in Weinrot. Oben die Einstellungen, im Spiel steht eine einzige große Karte in der Mitte. */
 :root{
   --table:#4A0F2B; --table-hi:#651A3D; --table-lo:#380A20;
@@ -531,6 +529,7 @@ body.t3on .ptop{background:color-mix(in srgb,var(--table-lo) 80%,transparent);bo
   <p class="tag">Das Kartenspiel zum Kennenlernen</p>
   <div class="mlist">
     <button class="btn" id="homeStart" type="button">Starten</button>
+    <button class="btn quiet mybtn" id="homeMine" type="button">Eigene Karten</button>
     <button class="btn quiet" id="resume" type="button" hidden>Letztes Spiel laden</button>
     <button class="btn quiet" id="bookOpen" type="button">Anleitung</button>
     <button class="btn quiet" id="homeSet" type="button">Einstellungen</button>
@@ -1232,10 +1231,7 @@ function isLand(){
  const phone=Math.min(screen.width,screen.height)<=540&&matchMedia('(pointer: coarse)').matches;
  return land&&phone;
 }
-/* Hinweis „Bitte drehen“: vorerst ausgeschaltet. Auf true setzen, um ihn wieder einzuschalten. */
-const DREH_HINWEIS=false;
 function checkRot(){
- if(!DREH_HINWEIS){$('rot').hidden=true;return}
  const v=navV,need=v==='play'||(v==='party'&&G&&G.phone),bad=need&&isLand();$('rot').hidden=!bad;if(!bad)return;
  const started=G&&(G.played>0||G.cur);
  $('rotT').textContent=started?'Oh nein, Querformat!':'Bitte ins Hochformat drehen';
@@ -2069,6 +2065,7 @@ function showMyOpts(){
  b.innerHTML=`<span>${svg('star')}</span><b>Mein Spiel</b><small>Mit deinen eigenen Karten</small>`;
  b.onclick=()=>showMyThemes('modes');first.parentNode.insertBefore(b,first);
 })();
+$('homeMine').onclick=()=>showMyThemes('home');
 /* Einstellungen */
 function applyLook(){const r=document.documentElement;if(S.look==='light'||S.look==='dark')r.dataset.theme=S.look;else if(r.dataset.setBy==='me')delete r.dataset.theme;if(S.look==='light'||S.look==='dark')r.dataset.setBy='me'}
 function confirmBtn(b,txt,f){let on=0;const t0=b.textContent;b.onclick=()=>{if(on){f();on=0;b.textContent=t0;return}on=1;b.textContent=txt;setTimeout(()=>{on=0;b.textContent=t0},3000)}}
