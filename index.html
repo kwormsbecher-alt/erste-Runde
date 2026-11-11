@@ -531,7 +531,6 @@ body.t3on .ptop{background:color-mix(in srgb,var(--table-lo) 80%,transparent);bo
   <p class="tag">Das Kartenspiel zum Kennenlernen</p>
   <div class="mlist">
     <button class="btn" id="homeStart" type="button">Starten</button>
-    <button class="btn quiet mybtn" id="homeMine" type="button">Eigene Karten</button>
     <button class="btn quiet" id="resume" type="button" hidden>Letztes Spiel laden</button>
     <button class="btn quiet" id="bookOpen" type="button">Anleitung</button>
     <button class="btn quiet" id="homeSet" type="button">Einstellungen</button>
@@ -2070,7 +2069,6 @@ function showMyOpts(){
  b.innerHTML=`<span>${svg('star')}</span><b>Mein Spiel</b><small>Mit deinen eigenen Karten</small>`;
  b.onclick=()=>showMyThemes('modes');first.parentNode.insertBefore(b,first);
 })();
-$('homeMine').onclick=()=>showMyThemes('home');
 /* Einstellungen */
 function applyLook(){const r=document.documentElement;if(S.look==='light'||S.look==='dark')r.dataset.theme=S.look;else if(r.dataset.setBy==='me')delete r.dataset.theme;if(S.look==='light'||S.look==='dark')r.dataset.setBy='me'}
 function confirmBtn(b,txt,f){let on=0;const t0=b.textContent;b.onclick=()=>{if(on){f();on=0;b.textContent=t0;return}on=1;b.textContent=txt;setTimeout(()=>{on=0;b.textContent=t0},3000)}}
