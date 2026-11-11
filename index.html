@@ -139,6 +139,14 @@ summary span:last-child{color:var(--muted);font-weight:500;font-size:.9rem;white
 .card.flipped .front{pointer-events:auto}
 .half{min-height:0;display:flex;flex-direction:column}
 .half.h1{transform:rotate(180deg);border-top:2px dashed color-mix(in srgb,var(--c) 45%,transparent)}
+/* Bildschirm-Ansicht (PC, Tablet quer, Online über Discord): alles steht aufrecht, die Karte zeigt nur eine Seite */
+#play.flat .zone.top{transform:none}
+#play.flat .front{grid-template-rows:1fr}
+#play.flat .half:not(.me){display:none}
+#play.flat .half.h1{transform:none;border-top:0}
+#play.flat .half.me{box-shadow:none}
+#play.flat .idle p:first-child{display:none}
+#play.flat .idle{justify-content:center!important}
 .band{background:var(--c);color:#fff;padding:1.3cqh 4cqw;display:flex;justify-content:space-between;align-items:center;gap:8px;flex:none}
 .half .band{order:2}
 .band span{font:400 clamp(.95rem,3cqh,1.3rem)/1.1 var(--display);display:flex;gap:7px;align-items:center;min-width:0}
@@ -776,6 +784,8 @@ body.t3on .ptop{background:color-mix(in srgb,var(--table-lo) 80%,transparent);bo
   </section>
   <section class="sbox"><h3>Lieblingsdesign</h3>
     <span class="sl">Erscheinungsbild</span><div class="seg" id="sLook"></div>
+    <span class="sl">Spielansicht</span><div class="seg" id="sView"></div>
+    <p class="hint">Gegenüber: das Tablet liegt zwischen euch, jede Seite zeigt zu einer Person. Bildschirm: alles steht aufrecht, gut für PC, Tablet quer oder Spielen über Discord. Automatisch wählt passend zum Gerät.</p>
     <span class="sl">Deine Farbe</span><div class="sw" id="sCol"></div>
     <span class="sl">Spieltisch</span><div class="tblg" id="sTbl"></div><div class="seg" id="sT3d"></div>
     <span class="sl">Kartenrückseite</span><div class="seg" id="sCover"></div><div class="cvbox" id="sCv"></div>
@@ -1145,7 +1155,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(M
 
 const S=Object.assign({n1:'',n2:'',off:[],catsOff:CATS.map(c=>c.id),mode:'norm',len:10,pk:'mix',luck:'p3',td:2,tdMode:'on',free:2,cols:[0,2],table:0,jok:2,own:[]},store.get('settings2',{}));
 S.own=[];
-for(const [k,v] of Object.entries({depth:'auto',known:[],custom:false,cover:'sym',cvd:'marmor',rim:true,t3d:true,look:'auto'}))if(S[k]===undefined)S[k]=v;
+for(const [k,v] of Object.entries({view:'auto',depth:'auto',known:[],custom:false,cover:'sym',cvd:'marmor',rim:true,t3d:true,look:'auto'}))if(S[k]===undefined)S[k]=v;
 if(!S.seenFF){S.seenFF=1;if(!S.catsOff.includes('fremde'))S.catsOff=[...S.catsOff,'fremde']}
 const save=()=>store.set('settings2',S);
 const allCats=()=>{OWN.cards=S.own;return S.own.length?[...CATS,OWN]:CATS};
@@ -1433,7 +1443,18 @@ function layoutHand(h){
  const w=h.children[0].offsetWidth,W=h.clientWidth-24;
  h.style.setProperty('--step',Math.min(w+6,n>1?(W-w)/(n-1):w)+'px');
 }
+/* Bildschirm-Ansicht: am PC oder Tablet quer automatisch, sonst Gegenüber */
+function isFlat(){
+ if(S.view==='screen')return true;if(S.view==='table')return false;
+ const touch=matchMedia('(pointer: coarse)').matches;
+ if(!touch)return true;
+ const so=screen.orientation&&screen.orientation.type,land=so?so.indexOf('landscape')===0:innerWidth>innerHeight;
+ return land&&Math.min(screen.width,screen.height)>540;
+}
+function applyFlat(){$('play').classList.toggle('flat',isFlat())}
+window.addEventListener('resize',()=>{if(navV==='play')applyFlat()});
 function render(deal){
+ applyFlat();
  if(G.lastLvl==null)G.lastLvl=autoLvl();
  if(G.phase==='choose'&&autoLvl()>G.lastLvl){G.lastLvl=autoLvl();setTimeout(()=>say('Stufe '+LV[G.lastLvl]+' freigeschaltet',0,1600,()=>{}),350)}
  $('play').classList.toggle('up',!!G.cur);
@@ -2077,6 +2098,7 @@ function renderSettings(){
  const p=S.pl[0];$('pfN').value=p.n;$('pfA').value=p.a;$('pfG').value=p.g;
  $('pfN').oninput=()=>{p.n=$('pfN').value;S.n1=p.n;save()};$('pfA').oninput=()=>{$('pfA').value=$('pfA').value.replace(/\D/g,'');p.a=$('pfA').value;save()};$('pfG').onchange=()=>{p.g=$('pfG').value;save()};
  seg('sLook',[['auto','Wie Gerät'],['light','Hell'],['dark','Dunkel']],'look',null);
+ seg('sView',[['auto','Automatisch'],['table','Gegenüber'],['screen','Bildschirm']],'view',null);
  $('sLook').querySelectorAll('button').forEach(b=>{const o=b.onclick;b.onclick=()=>{o();applyLook();renderSettings()}});
  const c=$('sCol');c.innerHTML='';PCOL.forEach((x,i)=>{const b=document.createElement('button');b.type='button';b.style.background=x;b.setAttribute('aria-label','Farbe '+(i+1));b.setAttribute('aria-pressed',S.cols[0]===i);b.onclick=()=>{S.cols[0]=i;if(S.cols[1]===i)S.cols[1]=(i+2)%PCOL.length;save();renderSettings()};c.append(b)});
  const t=$('sTbl');t.innerHTML='';TABLES.forEach((x,i)=>{const b=document.createElement('button');b.type='button';b.className='tbl';b.setAttribute('aria-pressed',S.table===i);b.innerHTML=`<i></i><span>${tName(x)}</span>`;b.querySelector('i').style.background=tPrev(x);b.onclick=()=>{S.table=i;menuT=i;save();applyTable();renderSettings()};t.append(b)});
