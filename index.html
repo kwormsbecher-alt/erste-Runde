@@ -1185,7 +1185,7 @@ function renderSetup(){
   b.onclick=()=>{S.catsOff=on?[...S.catsOff,c.id]:S.catsOff.filter(x=>x!==c.id);save();renderSetup()};
   $('cats').append(b);
  });
- const t=avail(),mx=Math.floor(t/2),base=[5,10,15,20],list=[...base,'all'],ok=base.filter(v=>v<=mx);
+ const t=avail(),mul=dbl()?2:1,mx=Math.floor(t/2/mul),base=[5,10,15,20],list=[...base,'all'],ok=base.filter(v=>v<=mx);
  if(S.len!=='all'&&!ok.includes(S.len))S.len=ok.length?(ok.includes(10)?10:ok[ok.length-1]):'all';
  const short=mx<20,msg='Du kannst leider nicht mehr als '+mx+' Karten pro Spieler nehmen, weil nur '+t+' Karten im Spiel sind.';
  seg('len',list.map(v=>[v,v==='all'?'Alle ('+mx+')':String(v)]),'len',()=>{},v=>v!=='all'&&v>mx);
@@ -1204,7 +1204,7 @@ function renderSetup(){
  const go=$('go'),n=S.len==='all'?mx:Math.min(S.len,mx);
  $('next').disabled=step===1&&!n;
  renderColors();
- go.disabled=!n;go.textContent=n?'Jeder bekommt '+n+' Karten':'Wähle mindestens eine Kategorie';
+ go.disabled=!n;go.textContent=n?'Jeder bekommt '+(S.len==='all'?Math.floor(t/2):n*mul)+' Karten':'Wähle mindestens eine Kategorie';
  const g=store.get('game2',null);$('resume').hidden=!g;
  const open=new Set([...document.querySelectorAll('#lists details[open]')].map(d=>d.dataset.c));
  $('lists').innerHTML='';
@@ -1312,6 +1312,8 @@ function build(wantEach){
  return out;
 }
 const tdPick=()=>!S.tdDirect;
+/* Ohne Wahl kommen Wahrheit und Pflicht getrennt: die gewählte Kartenzahl verdoppelt sich automatisch */
+const dbl=()=>S.mode==='wp'&&S.tdMode==='on'&&!tdPick();
 /* Kleiner Haken: dürfen die Spieler Wahrheit oder Pflicht selbst wählen?
    Mit Haken: jede Karte bietet die Wahl, das Spiel ist so lang wie eingestellt.
    Ohne Haken: die Karte ist direkt eine Wahrheit oder eine Pflicht. Dann kommen
@@ -1319,7 +1321,7 @@ const tdPick=()=>!S.tdDirect;
 function renderTdPick(id){
  const box=$(id);if(!box)return;
  if(S.mode!=='wp'||S.tdMode!=='on'){box.innerHTML='';return}
- box.innerHTML=`<label class="consent"><input type="checkbox" ${tdPick()?'checked':''}><span><b>Wahrheit oder Pflicht selbst wählen.</b> Ohne Haken bekommt man die Karte direkt als Wahrheit oder Pflicht.</span></label>`;
+ box.innerHTML=`<label class="consent"><input type="checkbox" ${tdPick()?'checked':''}><span><b>Wahrheit oder Pflicht selbst wählen.</b> Ohne Haken bekommt man die Karte direkt als Wahrheit oder Pflicht.${tdPick()?'':' Die Kartenzahl verdoppelt sich dann automatisch.'}</span></label>`;
  const cb=box.querySelector('input');
  cb.onchange=()=>{
   if(cb.checked){S.tdDirect=false;save();renderSetup();renderTdPick(id);return}
@@ -1384,7 +1386,7 @@ function buildWp(want){
  return shuffle(out);
 }
 function start(){
- const wp=S.mode==='wp',hands=[[],[]],t=avail(),each=S.len==='all'?Math.floor(t/2):Math.min(S.len,Math.floor(t/2));
+ const wp=S.mode==='wp',hands=[[],[]],t=avail(),each=S.len==='all'?Math.floor(t/2):Math.min(S.len*(dbl()?2:1),Math.floor(t/2));
  shuffle(wp?buildWp(each*2):build(each)).sort((a,b)=>(a.d||1)-(b.d||1)).forEach((c,i)=>hands[i%2].push(c));
  if(!wp){
   const lucky=new Set(),pickFrom=a=>shuffle(a.filter(c=>c.t==='choice'));
