@@ -1324,7 +1324,7 @@ function renderTdPick(id){
  cb.onchange=()=>{
   if(cb.checked){S.tdDirect=false;save();renderSetup();renderTdPick(id);return}
   const w=document.createElement('div');w.className='tdwarn';
-  w.innerHTML='Achtung: Ohne Wahl kommen alle Wahrheits- <b>und</b> alle Pflichtkarten ins Spiel. Dadurch gibt es doppelt so viele Karten und das Spiel wird länger. Ist das okay?<div><button type="button" class="mini gold">Okay</button><button type="button" class="mini">Lieber nicht</button></div>';
+  w.innerHTML='Achtung: Ohne Wahl kommen alle Wahrheits- <b>und</b> alle Pflichtkarten ins Spiel. Dadurch kann es doppelt so viele Karten oder mehr geben, und das Spiel wird länger. Ist das okay?<div><button type="button" class="mini gold">Okay</button><button type="button" class="mini">Lieber nicht</button></div>';
   const [ok,no]=w.querySelectorAll('button');
   ok.onclick=()=>{S.tdDirect=true;save();renderSetup();renderTdPick(id)};
   no.onclick=()=>{S.tdDirect=false;cb.checked=true;w.remove()};
