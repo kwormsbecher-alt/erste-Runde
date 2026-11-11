@@ -1223,14 +1223,23 @@ const NAV={settings:['setBack'],mine:['mineBack','mineGo'],modes:['modesBack'],o
 let navV='';
 function navFor(v){navV=v;const n=NAV[v];$('tnav').hidden=!n;if(!n)return;$('tnNext').hidden=!n[1];$('tnHome').hidden=v==='modes';$('tnNext').textContent=v==='players'&&!S.custom?'Starten →':'Weiter →'}
 const mqL=matchMedia('(orientation: landscape) and (pointer: coarse)');
+/* Querformat nur bei echten Handys erkennen. Die Bildschirm-Ausrichtung zählt, nicht die Fenstergröße,
+   sonst meldet z. B. eine offene Tastatur fälschlich Querformat. */
+function isLand(){
+ const so=screen.orientation&&screen.orientation.type;
+ const land=so?so.indexOf('landscape')===0:(typeof window.orientation==='number'?Math.abs(window.orientation)===90:innerWidth>innerHeight);
+ const phone=Math.min(screen.width,screen.height)<=540&&matchMedia('(pointer: coarse)').matches;
+ return land&&phone;
+}
 function checkRot(){
- const v=navV,need=v==='play'||(v==='party'&&G&&G.phone),bad=need&&mqL.matches;$('rot').hidden=!bad;if(!bad)return;
+ const v=navV,need=v==='play'||(v==='party'&&G&&G.phone),bad=need&&isLand();$('rot').hidden=!bad;if(!bad)return;
  const started=G&&(G.played>0||G.cur);
  $('rotT').textContent=started?'Oh nein, Querformat!':'Bitte ins Hochformat drehen';
  $('rotP').textContent=started?'Das Spiel ist pausiert. Dreh dein Handy zurück ins Hochformat, dann geht es genau hier weiter.':'Dieses Spiel wird im Hochformat gespielt. Dreh dein Handy, dann beginnt das Spiel.';
 }
 mqL.addEventListener?mqL.addEventListener('change',checkRot):mqL.addListener(checkRot);
 window.addEventListener('resize',()=>checkRot());
+window.addEventListener('orientationchange',()=>setTimeout(checkRot,200));if(screen.orientation&&screen.orientation.addEventListener)screen.orientation.addEventListener('change',checkRot);
 function show(v){['home','modes','opts','bye','setup','play','end','players','party','stats','mine','settings'].forEach(x=>$(x).hidden=x!==v);$('gmOpen').hidden=v!=='play';navFor(v);navV=v;checkRot();applyTable();table3(v==='play'||(v==='party'&&G&&!G.phone));$('gm').hidden=true;if(v!=='play')window.scrollTo(0,0)}
 /* Tiefe der Fragen: 1 Warm, 2 Mittel, 3 Tief */
 const LV=['','Warm','Mittel','Tief'];
