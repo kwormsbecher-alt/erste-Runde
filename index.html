@@ -1162,7 +1162,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(M
 
 const S=Object.assign({n1:'',n2:'',off:[],catsOff:CATS.map(c=>c.id),mode:'norm',len:10,pk:'mix',luck:'p3',td:2,tdMode:'on',free:2,cols:[0,2],table:0,jok:2,own:[]},store.get('settings2',{}));
 S.own=[];
-for(const [k,v] of Object.entries({tdPick:false,view:'auto',depth:'auto',known:[],custom:false,cover:'sym',cvd:'marmor',rim:true,t3d:true,look:'auto'}))if(S[k]===undefined)S[k]=v;
+for(const [k,v] of Object.entries({tdDirect:false,view:'auto',depth:'auto',known:[],custom:false,cover:'sym',cvd:'marmor',rim:true,t3d:true,look:'auto'}))if(S[k]===undefined)S[k]=v;
 if(!S.seenFF){S.seenFF=1;if(!S.catsOff.includes('fremde'))S.catsOff=[...S.catsOff,'fremde']}
 const save=()=>store.set('settings2',S);
 const allCats=()=>{OWN.cards=S.own;return S.own.length?[...CATS,OWN]:CATS};
@@ -1311,20 +1311,23 @@ function build(wantEach){
   const n=norm(x.c.cards[i]);out.push({...n,mine:x.c.mine,d:depthOf(n,x.c.id),name:x.c.name,sym:x.c.sym,col:x.c.c,lvl:x.c.lvl})}
  return out;
 }
-const tdPick=()=>!!S.tdPick;
-/* Kleiner Haken: dürfen die Spieler Wahrheit oder Pflicht selbst wählen? */
+const tdPick=()=>!S.tdDirect;
+/* Kleiner Haken: dürfen die Spieler Wahrheit oder Pflicht selbst wählen?
+   Mit Haken: jede Karte bietet die Wahl, das Spiel ist so lang wie eingestellt.
+   Ohne Haken: die Karte ist direkt eine Wahrheit oder eine Pflicht. Dann kommen
+   alle Wahrheits- UND alle Pflichtkarten ins Spiel, also doppelt so viele Karten. */
 function renderTdPick(id){
  const box=$(id);if(!box)return;
  if(S.mode!=='wp'||S.tdMode!=='on'){box.innerHTML='';return}
- box.innerHTML=`<label class="consent"><input type="checkbox" ${S.tdPick?'checked':''}><span><b>Wahrheit oder Pflicht selbst wählen.</b> Ohne Haken bekommt man einfach eine Wahrheits- oder eine Pflichtkarte.</span></label>`;
+ box.innerHTML=`<label class="consent"><input type="checkbox" ${tdPick()?'checked':''}><span><b>Wahrheit oder Pflicht selbst wählen.</b> Ohne Haken bekommt man die Karte direkt als Wahrheit oder Pflicht.</span></label>`;
  const cb=box.querySelector('input');
  cb.onchange=()=>{
-  if(!cb.checked){S.tdPick=false;save();renderSetup();renderTdPick(id);return}
+  if(cb.checked){S.tdDirect=false;save();renderSetup();renderTdPick(id);return}
   const w=document.createElement('div');w.className='tdwarn';
-  w.innerHTML='Achtung: Wenn man wählen darf, braucht jede Karte eine Wahrheit <b>und</b> eine Pflicht. Dafür werden doppelt so viele Karten verbraucht. Ist das okay?<div><button type="button" class="mini gold">Okay</button><button type="button" class="mini">Lieber nicht</button></div>';
+  w.innerHTML='Achtung: Ohne Wahl kommen alle Wahrheits- <b>und</b> alle Pflichtkarten ins Spiel. Dadurch gibt es doppelt so viele Karten und das Spiel wird länger. Ist das okay?<div><button type="button" class="mini gold">Okay</button><button type="button" class="mini">Lieber nicht</button></div>';
   const [ok,no]=w.querySelectorAll('button');
-  ok.onclick=()=>{S.tdPick=true;save();renderSetup();renderTdPick(id)};
-  no.onclick=()=>{S.tdPick=false;cb.checked=false;w.remove()};
+  ok.onclick=()=>{S.tdDirect=true;save();renderSetup();renderTdPick(id)};
+  no.onclick=()=>{S.tdDirect=false;cb.checked=true;w.remove()};
   box.querySelector('.tdwarn')||box.append(w);
  };
 }
