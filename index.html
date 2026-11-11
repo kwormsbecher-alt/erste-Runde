@@ -14,6 +14,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&family=Shrikhand&display=swap">
 <style>
+/* Versteckte Elemente wirklich ausblenden (wichtig außerhalb von Claude, z. B. auf GitHub) */
+[hidden]{display:none!important}
 /* Layout: ein Spieltisch in Weinrot. Oben die Einstellungen, im Spiel steht eine einzige große Karte in der Mitte. */
 :root{
   --table:#4A0F2B; --table-hi:#651A3D; --table-lo:#380A20;
@@ -1231,7 +1233,10 @@ function isLand(){
  const phone=Math.min(screen.width,screen.height)<=540&&matchMedia('(pointer: coarse)').matches;
  return land&&phone;
 }
+/* Hinweis „Bitte drehen“: vorerst ausgeschaltet. Auf true setzen, um ihn wieder einzuschalten. */
+const DREH_HINWEIS=false;
 function checkRot(){
+ if(!DREH_HINWEIS){$('rot').hidden=true;return}
  const v=navV,need=v==='play'||(v==='party'&&G&&G.phone),bad=need&&isLand();$('rot').hidden=!bad;if(!bad)return;
  const started=G&&(G.played>0||G.cur);
  $('rotT').textContent=started?'Oh nein, Querformat!':'Bitte ins Hochformat drehen';
