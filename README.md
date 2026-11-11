@@ -2,7 +2,7 @@
 
 Das Kartenspiel zum Kennenlernen. Läuft im Browser auf Handy, Tablet und PC.
 
-**Spielen:** https://kwormsbecher-alt.github.io/erste-runde/
+**Spielen:** https://kwormsbecher-alt.github.io/erste-Runde/
 
 ## Aktualisieren
 1. Neue Version als `index.html` speichern.
