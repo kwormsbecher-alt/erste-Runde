@@ -320,6 +320,12 @@ summary span:last-child{color:var(--muted);font-weight:500;font-size:.9rem;white
 .consent{display:flex;gap:9px;text-align:left;font-size:.82rem;line-height:1.3;color:var(--muted);max-width:440px;margin-top:10px}
 .consent input{flex:none;width:19px;height:19px;accent-color:var(--gold);margin-top:1px}
 .consent b{color:var(--on-table)}
+.tdpick{width:min(100%,480px);text-align:left}
+.tdpick:empty{display:none}
+.tdpick .consent{margin-top:12px}
+.tdwarn{margin-top:8px;padding:10px 12px;border-radius:12px;border:1px solid var(--gold);background:color-mix(in srgb,var(--gold) 12%,transparent);font-size:.86rem;line-height:1.35}
+.tdwarn div{display:flex;gap:8px;margin-top:8px}
+.tdwarn .mini.gold{background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:800}
 .prow{display:grid;grid-template-columns:minmax(0,1fr) 72px 118px;gap:6px}
 .pcount{display:flex;align-items:center;gap:14px;font-weight:800}
 .pcount .mini{font-size:1.2rem;padding:4px 15px}
@@ -608,7 +614,7 @@ body.t3on .ptop{background:color-mix(in srgb,var(--table-lo) 80%,transparent);bo
   <section class="step opt" data-title="Optionen" hidden>
     <h2 class="st">Optionen</h2>
     <div><span>Karten pro Person</span><div class="seg" id="len"></div><p class="hint" id="lenhint"></p><button class="mini" id="moreCats" type="button" style="margin-top:10px" hidden>Mehr Themen hinzufügen?</button></div>
-    <div data-m="wp"><span>Spielart</span><div class="seg" id="tdMode"></div><p class="hint">Fragen und Pflichten kommen aus deinen Themen.</p></div>
+    <div data-m="wp"><span>Spielart</span><div class="seg" id="tdMode"></div><p class="hint">Fragen und Pflichten kommen aus deinen Themen.</p><div class="tdpick" id="tdPickS"></div></div>
     <div data-m="wp"><span>Strafen</span><div class="seg" id="pk"></div><p class="hint">„Prickelnd“ bringt euch näher zusammen. Das Gegenüber kann jede Strafe erlassen.</p></div>
     <div><span>Fragentiefe</span><div class="seg" id="dep"></div><p class="hint">Langsam steigern: erst Warm, nach 3 Karten Mittel, nach 7 Karten Tief. Nur leicht: nur Warm-Fragen. Aus: alles von Anfang an.</p></div>
     <div data-m="norm"><span>Glückskarten</span><div class="seg" id="luck"></div><p class="hint">Sie zeigen zwei Themen, und wer sie zieht, sucht sich eins aus.</p></div>
@@ -750,6 +756,7 @@ body.t3on .ptop{background:color-mix(in srgb,var(--table-lo) 80%,transparent);bo
   <div class="pcount" id="pcBox"><button class="mini" id="pcM" type="button" aria-label="Weniger Spieler">−</button><b id="pcN"></b><button class="mini" id="pcP" type="button" aria-label="Mehr Spieler">+</button></div>
   <div class="mlist wide" id="plRows"></div>
   <p class="hint warn" id="plWarn" hidden></p>
+  <div class="tdpick" id="tdPickP"></div>
   <div class="known" id="plKnown" hidden></div>
   <button class="link" id="plCustom" type="button">Lieber individuell? Hier kannst du dein Spiel selbst gestalten</button>
   <div class="row pact"><button class="btn quiet" id="plBack" type="button">Zurück</button><button class="btn" id="plGo" type="button">Spiel starten</button></div>
@@ -1155,7 +1162,7 @@ const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(M
 
 const S=Object.assign({n1:'',n2:'',off:[],catsOff:CATS.map(c=>c.id),mode:'norm',len:10,pk:'mix',luck:'p3',td:2,tdMode:'on',free:2,cols:[0,2],table:0,jok:2,own:[]},store.get('settings2',{}));
 S.own=[];
-for(const [k,v] of Object.entries({view:'auto',depth:'auto',known:[],custom:false,cover:'sym',cvd:'marmor',rim:true,t3d:true,look:'auto'}))if(S[k]===undefined)S[k]=v;
+for(const [k,v] of Object.entries({tdPick:false,view:'auto',depth:'auto',known:[],custom:false,cover:'sym',cvd:'marmor',rim:true,t3d:true,look:'auto'}))if(S[k]===undefined)S[k]=v;
 if(!S.seenFF){S.seenFF=1;if(!S.catsOff.includes('fremde'))S.catsOff=[...S.catsOff,'fremde']}
 const save=()=>store.set('settings2',S);
 const allCats=()=>{OWN.cards=S.own;return S.own.length?[...CATS,OWN]:CATS};
@@ -1169,6 +1176,7 @@ function seg(id,opts,key,after,off){
   b.onclick=()=>{if(no){after&&after(v);return}S[key]=v;save();renderSetup()};el.append(b)});
 }
 function renderSetup(){
+ setTimeout(()=>renderTdPick('tdPickS'));
  $('cats').innerHTML='';
  allCats().forEach(c=>{
   const on=!S.catsOff.includes(c.id),b=document.createElement('button');
@@ -1303,6 +1311,23 @@ function build(wantEach){
   const n=norm(x.c.cards[i]);out.push({...n,mine:x.c.mine,d:depthOf(n,x.c.id),name:x.c.name,sym:x.c.sym,col:x.c.c,lvl:x.c.lvl})}
  return out;
 }
+const tdPick=()=>!!S.tdPick;
+/* Kleiner Haken: dürfen die Spieler Wahrheit oder Pflicht selbst wählen? */
+function renderTdPick(id){
+ const box=$(id);if(!box)return;
+ if(S.mode!=='wp'||S.tdMode!=='on'){box.innerHTML='';return}
+ box.innerHTML=`<label class="consent"><input type="checkbox" ${S.tdPick?'checked':''}><span><b>Wahrheit oder Pflicht selbst wählen.</b> Ohne Haken bekommt man einfach eine Wahrheits- oder eine Pflichtkarte.</span></label>`;
+ const cb=box.querySelector('input');
+ cb.onchange=()=>{
+  if(!cb.checked){S.tdPick=false;save();renderSetup();renderTdPick(id);return}
+  const w=document.createElement('div');w.className='tdwarn';
+  w.innerHTML='Achtung: Wenn man wählen darf, braucht jede Karte eine Wahrheit <b>und</b> eine Pflicht. Dafür werden doppelt so viele Karten verbraucht. Ist das okay?<div><button type="button" class="mini gold">Okay</button><button type="button" class="mini">Lieber nicht</button></div>';
+  const [ok,no]=w.querySelectorAll('button');
+  ok.onclick=()=>{S.tdPick=true;save();renderSetup();renderTdPick(id)};
+  no.onclick=()=>{S.tdPick=false;cb.checked=false;w.remove()};
+  box.querySelector('.tdwarn')||box.append(w);
+ };
+}
 const tdOnly=()=>S.tdMode==='dare'?'b':S.tdMode==='truth'?'a':0;
 const DARES={
  alltag:['Mach vor, wie du aussiehst, wenn der Wecker klingelt.','Mach vor, wie du aussiehst, wenn du zu spät dran bist.','Erzähl deinen heutigen Tag in zehn Sekunden.','Imitiere jemanden von deiner Arbeit oder aus deinem Alltag.'],
@@ -1333,13 +1358,22 @@ function avail(){
  const p=wpPools(),tr=p.reduce((n,x)=>n+x.tr.length,0),da=p.reduce((n,x)=>n+x.da.length,0);
  if(!p.length)return 0;
  const t=tr+ownT.length,d=da+ownD.length;
- return S.tdMode==='dare'?d:S.tdMode==='truth'?t:Math.min(t,d);
+ return S.tdMode==='dare'?d:S.tdMode==='truth'?t:tdPick()?Math.min(t,d):t+d;
 }
 function buildWp(want){
  const p=shuffle(wpPools()),tx=shuffle(ownT),dx=shuffle(ownD),out=[];let i=0;
  const take=(k,f)=>{for(let n=0;n<p.length;n++){const x=p[(f+n)%p.length];if(x[k].length)return {q:x[k].pop(),c:x.c}}return null};
  while(out.length<want&&i<500){
-  const f=i++%p.length,t=S.tdMode==='dare'?null:(take('tr',f)||(tx.length?{q:tx.pop(),c:p[f].c}:null)),d=S.tdMode==='truth'?null:(take('da',f)||(dx.length?{q:dx.pop(),c:p[f].c}:null));
+  const f=i++%p.length;
+  if(S.tdMode==='on'&&!tdPick()){
+   /* Ohne Wahl: jede Karte ist entweder eine Wahrheit oder eine Pflicht */
+   let k=i%2?'a':'b',x=k==='a'?(take('tr',f)||(tx.length?{q:tx.pop(),c:p[f].c}:null)):(take('da',f)||(dx.length?{q:dx.pop(),c:p[f].c}:null));
+   if(!x){k=k==='a'?'b':'a';x=k==='a'?(take('tr',f)||(tx.length?{q:tx.pop(),c:p[f].c}:null)):(take('da',f)||(dx.length?{q:dx.pop(),c:p[f].c}:null))}
+   if(!x)break;const c=x.c;
+   out.push({t:'choice',td:1,only:k,label:'Wahrheit oder Pflicht',q:'Wahrheit oder Pflicht?',a:'Wahrheit',qa:k==='a'?x.q:'',b:'Pflicht',qb:k==='b'?x.q:'',name:c.name,sym:c.sym,col:c.c,lvl:c.lvl,d:k==='a'?depthText(x.q,c.id):1,fn:c.name,fs:c.sym,mine:c.mine,fc:c.mine?'#B8902A':'#B5121B'});
+   continue;
+  }
+  const t=S.tdMode==='dare'?null:(take('tr',f)||(tx.length?{q:tx.pop(),c:p[f].c}:null)),d=S.tdMode==='truth'?null:(take('da',f)||(dx.length?{q:dx.pop(),c:p[f].c}:null));
   if((S.tdMode!=='dare'&&!t)||(S.tdMode!=='truth'&&!d))break;
   const c=(t||d).c;
   out.push({t:'choice',td:1,only:tdOnly(),label:'Wahrheit oder Pflicht',q:'Wahrheit oder Pflicht?',a:'Wahrheit',qa:t?t.q:'',b:'Pflicht',qb:d?d.q:'',name:c.name,sym:c.sym,col:c.c,lvl:c.lvl,d:t?depthText(t.q,c.id):1,fn:c.name,fs:c.sym,mine:c.mine,fc:c.mine?'#B8902A':'#B5121B'});
@@ -1843,6 +1877,7 @@ if(!S.pc)S.pc=2;
 const players=()=>S.pl.slice(0,S.mode==='party'?S.pc:2);
 const minor=()=>players().some(p=>p.a!==''&&+p.a<18);
 function renderPlayers(){
+ renderTdPick('tdPickP');
  const party=S.mode==='party';if(!party)S.pc=2;
  $('pcBox').hidden=!party;$('pcN').textContent=S.pc+' Spieler';
  $('plHint').textContent=(party?'Bis zu 8 Leute an einem Gerät. ':'')+'Alter und Geschlecht sind freiwillig.'+(S.stats?' Sie fließen ohne Namen in die Statistik ein.':'');
